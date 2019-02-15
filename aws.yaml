@@ -1,0 +1,29 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Parameters:
+    TableName:
+        Type: String
+
+Resources:
+    DbCloudwatchMetrics:
+        Type: AWS::DynamoDB::Table
+        DeletionPolicy: Retain
+        Properties:
+            TableName: !Ref TableName
+            BillingMode: PAY_PER_REQUEST
+            AttributeDefinitions:
+                -
+                  AttributeName: namespace
+                  AttributeType: S
+                -
+                  AttributeName: date
+                  AttributeType: S
+            KeySchema:
+                -
+                  AttributeName: namespace
+                  KeyType: HASH
+                -
+                  AttributeName: date
+                  KeyType: RANGE
+            StreamSpecification:
+                StreamViewType: NEW_AND_OLD_IMAGES
