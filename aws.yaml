@@ -25,5 +25,8 @@ Resources:
                 -
                   AttributeName: date
                   KeyType: RANGE
+            TimeToLiveSpecification:
+                AttributeName: expire_at
+                Enabled: true
             StreamSpecification:
                 StreamViewType: NEW_AND_OLD_IMAGES
