@@ -73,13 +73,11 @@ Resources:
                     table_name: !Sub "${TableName}"
             Code:
                 ZipFile: >
-                    console.log('Loading function');
                     var AWS = require('aws-sdk');
                     var dynamodb = new AWS.DynamoDB()
 
-                    var increment_minute = function(rec, cb ) {
+                    var increment_minute = function(rec,old_rec, cb ) {
                     		var expire_at = (Math.round(new Date().getTime() / 1000) + (60*60*24*15)).toString()
-                    		console.log("minute expire 15days ", expire_at )
                     		var min_update = {
                     			"TableName": process.env.table_name,
                     			"Key": {
@@ -98,20 +96,17 @@ Resources:
                     			if ( rec[attr].hasOwnProperty('N') )
                     				min_update.AttributeUpdates[attr] = {
                     					"Action": "ADD",
-                    					"Value": rec[attr]
+                    					"Value": {N: old_rec === null ? rec[attr].N : (parseFloat(rec[attr].N) - parseFloat(old_rec[attr].N || 0)).toString()},  
                     				}
                     		})
-                    		console.log("minute insert",JSON.stringify(min_update))
                     		dynamodb.updateItem(min_update, function(err) {
                     			console.log(err ? '☐' : '☑', "increment M", err )
                     			cb(err)
                     		})
                     };
-                    
-                    var increment_5minute = function(rec, cb ) {
-                    		
+
+                    var increment_5minute = function(rec,old_rec, cb ) {
                     		var expire_at = (Math.round(new Date().getTime() / 1000) + (60*60*24*63)).toString()
-                    		console.log("5minute expire 63days ", expire_at )
                     		var timestamp = (rec.date.S.slice(2)+'.000Z').split(' ').join('T')
                     		var min_update = {
                     			"TableName": process.env.table_name,
@@ -131,19 +126,17 @@ Resources:
                     			if ( rec[attr].hasOwnProperty('N') )
                     				min_update.AttributeUpdates[attr] = {
                     					"Action": "ADD",
-                    					"Value": rec[attr]
+                    					"Value": {N: old_rec === null ? rec[attr].N : (parseFloat(rec[attr].N) - parseFloat(old_rec[attr].N || 0)).toString()},
                     				}
                     		})
-                    		console.log("5minute insert",JSON.stringify(min_update))
                     		dynamodb.updateItem(min_update, function(err) {
                     			console.log(err ? '☐' : '☑', "increment 5M", err )
                     			cb(err)
                     		})
                     };
                     
-                    var increment_hour = function(rec, cb ) {
+                    var increment_hour = function(rec,old_rec, cb ) {
                     		var expire_at = (Math.round(new Date().getTime() / 1000) + (60*60*24*455)).toString()
-                    		console.log("5minute expire 455days ", expire_at )
                     		var min_update = {
                     			"TableName": process.env.table_name,
                     			"Key": {
@@ -162,12 +155,11 @@ Resources:
                     			if ( rec[attr].hasOwnProperty('N') )
                     				min_update.AttributeUpdates[attr] = {
                     					"Action": "ADD",
-                    					"Value": rec[attr]
+                    					"Value": {N: old_rec === null ? rec[attr].N : (parseFloat(rec[attr].N) - parseFloat(old_rec[attr].N || 0)).toString()},
                     				}
                     		})
-                    		console.log("hour insert", JSON.stringify(min_update))
                     		dynamodb.updateItem(min_update, function(err) {
-                    			console.log(err ? '☐' : '☑', "increment M", err )
+                    			console.log(err ? '☐' : '☑', "increment H", err )
                     			cb(err)
                     		})
                     };
@@ -177,25 +169,30 @@ Resources:
                     	var rec =     (event.Records[0].dynamodb.NewImage || {})
                     	var old_rec = (event.Records[0].dynamodb.OldImage || {})
 
-                    	// we only care for second resolution
-
                     	if (((rec.date || {}).S || [])[0] !== 'S')
                     		return context.done();
 
-                    	if ( ev === 'INSERT') {
-                    		console.log('INSERT',JSON.stringify(rec,null,"\t"))
-                    
-                    		// wish we had async 
-                    		increment_minute(rec, function(err) {
-                    			increment_5minute(rec, function(err) {
-                    				increment_hour(rec, function(err) {
+                    	if ( ev === 'INSERT' ) {
+                    		increment_minute(rec, null,function(err) {
+                    			increment_5minute(rec,null, function(err) {
+                    				increment_hour(rec,null, function(err) {
                     					context.done()
                     				})
                     			})
-                    			
                     		})
                     		return;
-                    	}
+                    	};
+
+                    	if ( ev === 'MODIFY' ) {
+                    		increment_minute(rec, old_rec,function(err) {
+                    			increment_5minute(rec,old_rec, function(err) {
+                    				increment_hour(rec,old_rec, function(err) {
+                    					context.done()
+                    				})
+                    			})
+                    		})
+                    		return;
+                    	};
 
                     	console.log(JSON.stringify(event,null,"\t"))
                     	context.done();
