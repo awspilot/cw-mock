@@ -57,3 +57,34 @@ Resources:
                 Action:
                 - 'dynamodb:*'
                 Resource: '*'
+
+    CwStreamHandlerFunction:
+        Type: AWS::Lambda::Function
+        DependsOn: [ CwMockRole ]
+        Properties:
+            FunctionName: cloudwatch-stream-handler
+            MemorySize: 128
+            Handler: index.handler
+            Role: !GetAtt CwMockRole.Arn
+            Runtime: nodejs6.10
+            Timeout: 300
+            Environment:
+                Variables:
+                    table_name: !Sub "${TableName}"
+            Code:
+                ZipFile: >
+                    console.log('Loading function');
+                    var AWS = require('aws-sdk');
+
+                    exports.handler = function(event, context) {
+                        console.log(JSON.stringify(event,null,"\t"))
+                        context.done();
+                    };
+
+    SendersTableStream:
+       Type: AWS::Lambda::EventSourceMapping
+       Properties:
+         BatchSize: 1
+         EventSourceArn: !GetAtt DbCloudwatchMetrics.StreamArn
+         FunctionName: !Ref CwStreamHandlerFunction
+         StartingPosition: TRIM_HORIZON
