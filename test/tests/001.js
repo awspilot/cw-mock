@@ -7,7 +7,7 @@ describe('putMetricData', function () {
 			MetricData:[{
 				MetricName: 'sent',
 				Timestamp:  new Date,
-				Value: Math.floor(Math.random()*1000),
+				Value: 1,
 			}],
 			Namespace: 'hello/world/1',
 		};
