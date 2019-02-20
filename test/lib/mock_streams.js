@@ -11,7 +11,7 @@ var Shards = {};
 
 function stream_consumer( cb ) {
 	
-	console.log("----stream----")
+	//console.log("----stream----")
 
 	var iterators = [];
 	var Records = [];
