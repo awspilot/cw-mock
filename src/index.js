@@ -155,7 +155,9 @@ Cloudwatch.prototype.getMetricStatistics = function( params, cb ) {
 						if (!Datapoints.hasOwnProperty(date))
 							Datapoints[date] = 0
 
-						Datapoints[date] += d[ params.MetricName ];
+						if (d[ params.MetricName ])
+							Datapoints[date] += d[ params.MetricName ];
+
 						break;
 				}
 			})
