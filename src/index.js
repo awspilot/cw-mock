@@ -64,7 +64,7 @@ Cloudwatch.prototype.putMetricData = function( params, cb ) {
 		DynamoDB
 			.table( $this.config.table_name || process.env.CW_DYNAMODB_TABLE)
 			.insert_or_update(payload, function(err) {
-				console.log(err ? '☐' : '☑', "increment ", err )
+				//console.log(err ? '☐' : '☑', "increment ", err )
 				cb(err)
 
 			})
