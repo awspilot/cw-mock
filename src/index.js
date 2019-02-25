@@ -131,6 +131,9 @@ Cloudwatch.prototype.getMetricStatistics = function( params, cb ) {
 	if (!between_start)
 		return cb({ errorCode: 'invalid period'})
 	
+	
+console.log('cwmock',"start=", between_start, "end=", between_end )
+	
 	DynamoDB
 		.table( $this.config.table_name || process.env.CW_DYNAMODB_TABLE)
 		.where('namespace').eq(params.Namespace)
