@@ -145,6 +145,9 @@ console.log('cwmock',"start=", between_start, "end=", between_end )
 				Datapoints: [], // { Timestamp: Sum:  }
 			}
 			var Datapoints = {}
+			console.log("cwmock data.length", data.length)
+			console.log("cwmock data", JSON.stringify(data,null,"\t"))
+
 			data.map(function(d) {
 				switch (params.Period ) {
 					case 60*60: // 1h
