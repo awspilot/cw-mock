@@ -96,7 +96,7 @@ Resources:
                     			if ( rec[attr].hasOwnProperty('N') )
                     				min_update.AttributeUpdates[attr] = {
                     					"Action": "ADD",
-                    					"Value": {N: old_rec === null ? rec[attr].N : (parseFloat(rec[attr].N) - parseFloat(old_rec[attr].N || 0)).toString()},  
+                    					"Value": {N: old_rec === null ? rec[attr].N : (parseFloat(rec[attr].N) - parseFloat((old_rec[attr] || {}).N || 0)).toString()},  
                     				}
                     		})
                     		dynamodb.updateItem(min_update, function(err) {
@@ -126,7 +126,7 @@ Resources:
                     			if ( rec[attr].hasOwnProperty('N') )
                     				min_update.AttributeUpdates[attr] = {
                     					"Action": "ADD",
-                    					"Value": {N: old_rec === null ? rec[attr].N : (parseFloat(rec[attr].N) - parseFloat(old_rec[attr].N || 0)).toString()},
+                    					"Value": {N: old_rec === null ? rec[attr].N : (parseFloat(rec[attr].N) - parseFloat((old_rec[attr] || {}).N || 0)).toString()},
                     				}
                     		})
                     		dynamodb.updateItem(min_update, function(err) {
@@ -155,7 +155,7 @@ Resources:
                     			if ( rec[attr].hasOwnProperty('N') )
                     				min_update.AttributeUpdates[attr] = {
                     					"Action": "ADD",
-                    					"Value": {N: old_rec === null ? rec[attr].N : (parseFloat(rec[attr].N) - parseFloat(old_rec[attr].N || 0)).toString()},
+                    					"Value": {N: old_rec === null ? rec[attr].N : (parseFloat(rec[attr].N) - parseFloat((old_rec[attr] || {}).N || 0)).toString()},
                     				}
                     		})
                     		dynamodb.updateItem(min_update, function(err) {
