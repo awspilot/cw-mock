@@ -130,13 +130,7 @@ Cloudwatch.prototype.getMetricStatistics = function( params, cb ) {
 	
 	if (!between_start)
 		return cb({ errorCode: 'invalid period'})
-
-	console.log(between_start)
-	console.log(between_end)
 	
-	
-	console.log(params)
-
 	DynamoDB
 		.table( $this.config.table_name || process.env.CW_DYNAMODB_TABLE)
 		.where('namespace').eq(params.Namespace)
@@ -162,7 +156,6 @@ Cloudwatch.prototype.getMetricStatistics = function( params, cb ) {
 				}
 			})
 
-			console.log('Datapoints', Datapoints )
 			Object.keys(Datapoints).map(function(timestamp) {
 				ret.Datapoints.push({
 					Timestamp: timestamp,
