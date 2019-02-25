@@ -153,7 +153,7 @@ console.log('cwmock',"start=", between_start, "end=", between_end )
 							Datapoints[date] = 0
 
 						if (d[ params.MetricName ])
-							Datapoints[date] += d[ params.MetricName ];
+							Datapoints[date] += d.hasOwnProperty(params.MetricName) ? d[ params.MetricName ] : 0;
 
 						break;
 				}
