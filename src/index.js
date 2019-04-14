@@ -38,6 +38,8 @@ var Cloudwatch = function( config ) {
 }
 
 Cloudwatch.prototype.create_stats_table = function() {
+	var $this=this;
+
 	var ddb = this.config.hasOwnProperty('DynamoDB') ? this.config.DynamoDB : DynamoDB;
 	ddb.query(`
 		CREATE PAY_PER_REQUEST TABLE cloudwatch_stats (
@@ -48,6 +50,21 @@ Cloudwatch.prototype.create_stats_table = function() {
 	`, function(err,data) {
 		console.log("create table => ", err, data )
 	});
+	setTimeout(function() {
+		var params = {
+			TableName: $this.config.table_name || process.env.CW_DYNAMODB_TABLE,
+			TimeToLiveSpecification: {
+				AttributeName: 'expire_at',
+				Enabled: true,
+			}
+		};
+		ddb.client.updateTimeToLive( params , function(err, data) {
+			if (err)
+				console.log(err)
+
+		})
+	},3000)
+
 }
 
 Cloudwatch.prototype.increment_minute = function( namespace, timestamp, metric, value ) {
