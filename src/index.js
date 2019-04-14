@@ -80,6 +80,37 @@ Cloudwatch.prototype.increment_minute = function( namespace, timestamp, metric, 
 	})
 };
 
+Cloudwatch.prototype.increment_5minute = function( namespace, timestamp, metric, value ) {
+	var ddb = this.config.hasOwnProperty('DynamoDB') ? this.config.DynamoDB : DynamoDB;
+
+	var expire_at = (Math.round(new Date().getTime() / 1000) + (60*60*24*63)).toString()
+
+	var t = ( new Date(timestamp).toISOString().slice(0,19) +'.000Z').split(' ').join('T')
+
+	var min_update = {
+		"TableName": this.config.table_name || process.env.CW_DYNAMODB_TABLE,
+		"Key": {
+			namespace: { S: namespace },
+			date: {S: '5M '+ (new Date(new Date(t).getTime() - (new Date(t).getTime() % (1000*60*5))).toISOString()).slice(0,16).split('T').join(' ') },
+		},
+		"AttributeUpdates": {
+			"expire_at": {
+				"Action": "PUT",
+				"Value": { N: expire_at }, // expire in 63 days
+			},
+		},
+	}
+
+	min_update.AttributeUpdates[metric] = {
+		"Action": "ADD",
+		"Value": { N: value.toString() },
+	}
+
+	ddb.client.updateItem(min_update, function(err) {
+		console.log(err ? '☐' : '☑', "increment 5M", err )
+	})
+};
+
 Cloudwatch.prototype.putMetricData = function( params, cb ) {
 	var $this = this;
 
@@ -121,6 +152,7 @@ Cloudwatch.prototype.putMetricData = function( params, cb ) {
 
 		if ( $this.config.streams_enabled === false ) {
 			$this.increment_minute( namespace, new Date(metric.Timestamp).getTime(), metric.MetricName, metric.Value )
+			$this.increment_5minute( namespace, new Date(metric.Timestamp).getTime(), metric.MetricName, metric.Value )
 		}
 	}, function(err) {
 		cb(err)
