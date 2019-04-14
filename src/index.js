@@ -49,6 +49,37 @@ Cloudwatch.prototype.create_stats_table = function() {
 		console.log("create table => ", err, data )
 	});
 }
+
+Cloudwatch.prototype.increment_minute = function( namespace, timestamp, metric, value ) {
+	var ddb = this.config.hasOwnProperty('DynamoDB') ? this.config.DynamoDB : DynamoDB;
+
+	var expire_at = (Math.round(new Date().getTime() / 1000) + (60*60*24*15)).toString()
+
+
+	var min_update = {
+		"TableName": this.config.table_name || process.env.CW_DYNAMODB_TABLE,
+		"Key": {
+			namespace: { S: namespace },
+			date: {S: 'M '+ new Date(timestamp).toISOString().split('T').join(' ').slice(0,16) },
+		},
+		"AttributeUpdates": {
+			"expire_at": {
+				"Action": "PUT",
+				"Value": { N: expire_at  }, // expire in 15 days
+			},
+		},
+	}
+
+	min_update.AttributeUpdates[metric] = {
+		"Action": "ADD",
+		"Value": { N: value.toString() },
+	}
+
+	ddb.client.updateItem(min_update, function(err) {
+		console.log(err ? '☐' : '☑', "increment minute", err )
+	})
+};
+
 Cloudwatch.prototype.putMetricData = function( params, cb ) {
 	var $this = this;
 
@@ -87,6 +118,10 @@ Cloudwatch.prototype.putMetricData = function( params, cb ) {
 				cb(err)
 
 			})
+
+		if ( $this.config.streams_enabled === false ) {
+			$this.increment_minute( namespace, new Date(metric.Timestamp).getTime(), metric.MetricName, metric.Value )
+		}
 	}, function(err) {
 		cb(err)
 	})
