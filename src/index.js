@@ -33,17 +33,32 @@ if (process.env.CW_DYNAMODB_ENDPOINT) {
 
 var Cloudwatch = function( config ) {
 	this.config = typeof config === "object" ? config : {}
-	
-	
+
+
 }
 
+Cloudwatch.prototype.create_stats_table = function() {
+	var ddb = this.config.hasOwnProperty('DynamoDB') ? this.config.DynamoDB : DynamoDB;
+	ddb.query(`
+		CREATE PAY_PER_REQUEST TABLE cloudwatch_stats (
+			namespace STRING,
+			\`date\` STRING,
+			PRIMARY KEY ( namespace, \`date\` )
+		)
+	`, function(err,data) {
+		console.log("create table => ", err, data )
+	});
+}
 Cloudwatch.prototype.putMetricData = function( params, cb ) {
 	var $this = this;
+
+	var ddb = this.config.hasOwnProperty('DynamoDB') ? this.config.DynamoDB : DynamoDB;
+
 
 	var namespace='_'
 	if (params.Namespace)
 		namespace = params.Namespace
-		
+
 	if (this.config.namespace_prefix)
 		namespace = this.config.namespace_prefix + namespace
 
@@ -58,12 +73,16 @@ Cloudwatch.prototype.putMetricData = function( params, cb ) {
 			date: 'S ' + new Date(metric.Timestamp).toISOString().substr(0,19).split('T').join(' '),
 			expire_at: Math.round(new Date().getTime() / 1000) + (60*60*3) // expire in 3 thours
 		}
-		
+
 		payload[ metric.MetricName  ] = DynamoDB.add( metric.Value )
 
-		DynamoDB
+		ddb
 			.table( $this.config.table_name || process.env.CW_DYNAMODB_TABLE)
 			.insert_or_update(payload, function(err) {
+
+				if (err && err.code === 'ResourceNotFoundException')
+					$this.create_stats_table()
+
 				//console.log(err ? '☐' : '☑', "increment ", err )
 				cb(err)
 
@@ -87,7 +106,7 @@ var params = {
 
 if (event._GET.dimension_name) {
 	params.Dimensions = [{
-		Name:  event._GET.dimension_name, 
+		Name:  event._GET.dimension_name,
 		Value: event._GET.dimension_value,
 	}]
 }
@@ -127,19 +146,19 @@ Cloudwatch.prototype.getMetricStatistics = function( params, cb ) {
 			break;
 
 	}
-	
+
 	if (!between_start)
 		return cb({ errorCode: 'invalid period'})
-	
-	
+
+
 console.log('cwmock',"start=", between_start, "end=", between_end )
-	
+
 	DynamoDB
 		.table( $this.config.table_name || process.env.CW_DYNAMODB_TABLE)
 		.where('namespace').eq(params.Namespace)
 		.where('date').between( between_start, between_end )
 		.query(function(err, data) {
-			
+
 			var ret = {
 				// Label:
 				Datapoints: [], // { Timestamp: Sum:  }
