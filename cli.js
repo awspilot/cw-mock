@@ -1,12 +1,15 @@
 #!/usr/bin/env node
 
+
+
+
+
 var qs = require('qs')
+var AWS = require('aws-sdk')
 form_parameters = require('./src/lib/form_parameters')
+const DynamodbFactory = require('@awspilot/dynamodb')
+DynamodbFactory.config( {empty_string_replace_as: "\0" } );
 var CwMock = require("./src/index")
-dbcloudwatch = new CwMock({
-	table_name: 'cloudwatch_stats',
-	dynamic_regions: true,
-});
 
 console.log("Starting cloudwatch-mock server on port 10005")
 
@@ -35,9 +38,40 @@ http.createServer(function (client_req, client_res) {
 
 
 		form_parameters.extract_param('Statistics', body_json )
+		form_parameters.extract_param('MetricData', body_json )
 		console.log(body_json)
 
-		//if (body_json.Action === '')
+		if (body_json.Action === 'PutMetricData') {
+			delete body_json.Action;
+			delete body_json.Version;
+
+			body_json.MetricData = body_json.MetricData.map(function(md) {
+				md.Value = parseFloat(md.Value)
+				md.Timestamp = new Date( md.Timestamp )
+				return md;
+			})
+
+
+			dbcloudwatch = new CwMock({
+				table_name: 'cloudwatch_stats',
+				DynamoDB: new DynamodbFactory(
+					new AWS.DynamoDB({
+						endpoint:        process.env.CW_DYNAMODB_ENDPOINT,
+						accessKeyId:     process.env.CW_DYNAMODB_KEY,
+						secretAccessKey: process.env.CW_DYNAMODB_SECRET,
+						region:          'aws-' + auth.groups.region,
+					})
+				),
+				streams_enabled: false,
+			});
+
+
+ 			dbcloudwatch.putMetricData(body_json,function(err,data) {
+				console.log( err, data )
+				client_res.end('')
+			});
+			return ;
+		}
 
 
 		console.log("[cloudwatch-mock] received request ",JSON.stringify({
