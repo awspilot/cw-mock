@@ -52,7 +52,7 @@ http.createServer(function (client_req, client_res) {
 			})
 
 
-			dbcloudwatch = new CwMock({
+			var dbcloudwatch = new CwMock({
 				table_name: 'cloudwatch_stats',
 				DynamoDB: new DynamodbFactory(
 					new AWS.DynamoDB({
@@ -73,6 +73,39 @@ http.createServer(function (client_req, client_res) {
 			return ;
 		}
 
+		if (body_json.Action === 'GetMetricStatistics') {
+			delete body_json.Action;
+			delete body_json.Version;
+			
+			var dbcloudwatch = new CwMock({
+				table_name: 'cloudwatch_stats',
+				DynamoDB: new DynamodbFactory(
+					new AWS.DynamoDB({
+						endpoint:        process.env.CW_DYNAMODB_ENDPOINT,
+						accessKeyId:     process.env.CW_DYNAMODB_KEY,
+						secretAccessKey: process.env.CW_DYNAMODB_SECRET,
+						region:          'aws-' + auth.groups.region,
+					})
+				),
+				streams_enabled: false,
+			});
+			
+			
+			dbcloudwatch.getMetricStatistics({
+				Period: parseInt( body_json.Period ),
+				StartTime: body_json.StartTime,
+				EndTime: body_json.EndTime,
+				Namespace: body_json.Namespace,
+			}, function(err,data) {
+				if (err) {
+					client_res.writeHead( 400 );
+					return client_res.end('')
+				}
+				console.log( err, data )
+				client_res.end(JSON.stringify(data))
+			})
+			return ;
+		}
 
 		console.log("[cloudwatch-mock] received request ",JSON.stringify({
 			url: client_req.url,
