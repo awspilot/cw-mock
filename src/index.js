@@ -245,8 +245,10 @@ cloudwatch.getMetricStatistics(params, function(err, data) {
 */
 
 Cloudwatch.prototype.getMetricStatistics = function( params, cb ) {
-
 	var $this=this;
+
+	var ddb = this.config.hasOwnProperty('DynamoDB') ? this.config.DynamoDB : DynamoDB;
+
 	var between_start;
 	var between_end;
 
@@ -268,7 +270,7 @@ Cloudwatch.prototype.getMetricStatistics = function( params, cb ) {
 
 console.log('cwmock table=',$this.config.table_name || process.env.CW_DYNAMODB_TABLE,"namespace=",params.Namespace, "start=", between_start, "end=", between_end )
 
-	DynamoDB
+	ddb
 		.table( $this.config.table_name || process.env.CW_DYNAMODB_TABLE )
 		.where('namespace').eq(params.Namespace)
 		.where('date').between( between_start, between_end )
