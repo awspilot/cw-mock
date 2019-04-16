@@ -42,7 +42,7 @@ Cloudwatch.prototype.create_stats_table = function() {
 
 	var ddb = this.config.hasOwnProperty('DynamoDB') ? this.config.DynamoDB : DynamoDB;
 	ddb.query(`
-		CREATE PAY_PER_REQUEST TABLE cloudwatch_stats (
+		CREATE PAY_PER_REQUEST TABLE ` + ($this.config.table_name || process.env.CW_DYNAMODB_TABLE) + ` (
 			namespace STRING,
 			\`date\` STRING,
 			PRIMARY KEY ( namespace, \`date\` )
@@ -186,7 +186,7 @@ Cloudwatch.prototype.putMetricData = function( params, cb ) {
 		payload[ metric.MetricName  ] = DynamoDB.add( metric.Value )
 
 		ddb
-			.table( $this.config.table_name || process.env.CW_DYNAMODB_TABLE)
+			.table( $this.config.table_name || process.env.CW_DYNAMODB_TABLE )
 			.insert_or_update(payload, function(err) {
 
 				if (err && err.code === 'ResourceNotFoundException')
