@@ -268,7 +268,6 @@ Cloudwatch.prototype.getMetricStatistics = function( params, cb ) {
 		return cb({ errorCode: 'invalid period'})
 
 
-console.log('cwmock table=',$this.config.table_name || process.env.CW_DYNAMODB_TABLE,"namespace=",params.Namespace, "start=", between_start, "end=", between_end )
 
 	ddb
 		.table( $this.config.table_name || process.env.CW_DYNAMODB_TABLE )
@@ -289,6 +288,7 @@ console.log('cwmock table=',$this.config.table_name || process.env.CW_DYNAMODB_T
 			data.map(function(d) {
 				switch (params.Period ) {
 					case 60*60: // 1h
+
 						var date = new Date((d.date.slice(2,15) + ':00:00.000Z').split(' ').join('T')).getTime()
 						if (!Datapoints.hasOwnProperty(date))
 							Datapoints[date] = 0
@@ -306,7 +306,7 @@ console.log('cwmock table=',$this.config.table_name || process.env.CW_DYNAMODB_T
 					Sum: Datapoints[timestamp],
 				})
 			})
-			//console.log( err, data )
+
 			cb(null, ret )
 		})
 
