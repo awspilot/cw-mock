@@ -10,6 +10,8 @@ form_parameters = require('./src/lib/form_parameters')
 const DynamodbFactory = require('@awspilot/dynamodb')
 DynamodbFactory.config( {empty_string_replace_as: "\0" } );
 var CwMock = require("./src/index")
+Ractive = require('ractive')
+Ractive.DEBUG = false;
 
 console.log("Starting cloudwatch-mock server on port 10005")
 
@@ -96,13 +98,45 @@ http.createServer(function (client_req, client_res) {
 				StartTime: body_json.StartTime,
 				EndTime: body_json.EndTime,
 				Namespace: body_json.Namespace,
+				MetricName: body_json.MetricName,
 			}, function(err,data) {
+				
 				if (err) {
 					client_res.writeHead( 400 );
 					return client_res.end('')
 				}
-				console.log( err, data )
-				client_res.end(JSON.stringify(data))
+
+
+				var ractive = new Ractive({
+					template: `
+						<GetMetricStatisticsResponse xmlns="http://monitoring.amazonaws.com/doc/2010-08-01/">
+							<GetMetricStatisticsResult>
+								<Datapoints>
+									{{#Datapoints}}
+									<member>
+										<Unit>Count</Unit>
+										<Sum>{{.Sum}}</Sum>
+										<Timestamp>{{ .ts }}</Timestamp>
+									</member>
+									{{/Datapoints}}
+								</Datapoints>
+								<Label>ConsumedReadCapacityUnits</Label>
+							</GetMetricStatisticsResult>
+							<ResponseMetadata>
+								<RequestId>xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx</RequestId>
+							</ResponseMetadata>
+						</GetMetricStatisticsResponse>
+					`,
+					data: {
+						Datapoints: data.Datapoints.map(function(dp) {
+
+							dp.ts = new Date(parseInt(dp.Timestamp)).toISOString()
+							return dp;
+						})
+					}
+				});
+
+				client_res.end(ractive.toHTML())
 			})
 			return ;
 		}
@@ -155,3 +189,5 @@ http.createServer(function (client_req, client_res) {
 
 	});
 }).listen(10005);
+
+
