@@ -262,6 +262,11 @@ Cloudwatch.prototype.getMetricStatistics = function( params, cb ) {
 			between_end   = 'M ' + (new Date(params.EndTime  ).toISOString().slice(0,16).split('T').join(' ')  )
 			break;
 
+		case 60: // minute
+			between_start = 'M ' + (new Date(params.StartTime).toISOString().slice(0,16).split('T').join(' ')  )
+			between_end   = 'M ' + (new Date(params.EndTime  ).toISOString().slice(0,16).split('T').join(' ')  )
+			break;
+
 	}
 
 	if (!between_start)
@@ -285,11 +290,29 @@ Cloudwatch.prototype.getMetricStatistics = function( params, cb ) {
 			console.log("cwmock data.length", data.length)
 			console.log("cwmock data", JSON.stringify(data,null,"\t"))
 
+
+			for (var i = new Date(params.StartTime).getTime();i<= new Date(params.EndTime).getTime(); i+=( 1000 * params.Period ) ) {
+				console.log(new Date(i - (i % (1000* params.Period ))).toISOString())
+				var date = new Date(i - (i % (1000* params.Period ))).getTime()
+				if (!Datapoints.hasOwnProperty(date))
+					Datapoints[date] = 0
+			}
+
 			data.map(function(d) {
 				switch (params.Period ) {
 					case 60*60: // 1h
 
 						var date = new Date((d.date.slice(2,15) + ':00:00.000Z').split(' ').join('T')).getTime()
+						if (!Datapoints.hasOwnProperty(date))
+							Datapoints[date] = 0
+
+						if (d[ params.MetricName ])
+							Datapoints[date] += d.hasOwnProperty(params.MetricName) ? d[ params.MetricName ] : 0;
+
+						break;
+					case 60: // 1min
+
+						var date = new Date((d.date.slice(2,18) + ':00.000Z').split(' ').join('T')).getTime()
 						if (!Datapoints.hasOwnProperty(date))
 							Datapoints[date] = 0
 
