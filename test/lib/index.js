@@ -10,10 +10,20 @@ process.env.CW_DYNAMODB_TABLE ="stats"
 
 Cloudwatch = require("../../src/index")
 
-
 cloudwatch = new Cloudwatch({
 	table_name: 'stats',
 });
 
+
+require('../../cli')
+
+cli_cloudwatch = new AWS.CloudWatch({
+	endpoint: 'http://localhost:1005',
+	region: process.env.CW_DYNAMODB_REGION,
+	credentials: {
+		accessKeyId: process.env.CW_DYNAMODB_KEY,
+		secretAccessKey: process.env.CW_DYNAMODB_SECRET,
+	}
+});
 
 
