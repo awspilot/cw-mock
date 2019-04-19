@@ -262,6 +262,11 @@ Cloudwatch.prototype.getMetricStatistics = function( params, cb ) {
 			between_end   = 'M ' + (new Date(params.EndTime  ).toISOString().slice(0,16).split('T').join(' ')  )
 			break;
 
+		case 300: // 5 minutes
+			between_start = '5M ' + (new Date(params.StartTime).toISOString().slice(0,16).split('T').join(' ')  )
+			between_end   = '5M ' + (new Date(params.EndTime  ).toISOString().slice(0,16).split('T').join(' ')  )
+			break;
+
 		case 60: // minute
 			between_start = 'M ' + (new Date(params.StartTime).toISOString().slice(0,16).split('T').join(' ')  )
 			between_end   = 'M ' + (new Date(params.EndTime  ).toISOString().slice(0,16).split('T').join(' ')  )
@@ -303,6 +308,16 @@ Cloudwatch.prototype.getMetricStatistics = function( params, cb ) {
 					case 60*60: // 1h
 
 						var date = new Date((d.date.slice(2,15) + ':00:00.000Z').split(' ').join('T')).getTime()
+						if (!Datapoints.hasOwnProperty(date))
+							Datapoints[date] = 0
+
+						if (d[ params.MetricName ])
+							Datapoints[date] += d.hasOwnProperty(params.MetricName) ? d[ params.MetricName ] : 0;
+
+						break;
+					case 300: // 5min
+
+						var date = new Date((d.date.slice(3,19) + ':00.000Z').split(' ').join('T')).getTime()
 						if (!Datapoints.hasOwnProperty(date))
 							Datapoints[date] = 0
 
