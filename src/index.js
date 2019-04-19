@@ -175,6 +175,18 @@ Cloudwatch.prototype.putMetricData = function( params, cb ) {
 		return cb({ errorCode: 'invalid MetricData'})
 
 
+
+	if (
+		params.MetricData[0].hasOwnProperty('Dimensions') && 
+		(Array.isArray(params.MetricData[0].Dimensions)) &&  
+		(params.MetricData[0].Dimensions.length) &&
+		(typeof params.MetricData[0].Dimensions[0] === "object") &&
+		(typeof params.MetricData[0].Dimensions[0].Name === "string") &&
+		(typeof params.MetricData[0].Dimensions[0].Value === "string")
+	) {
+		namespace = namespace + ' ' + params.MetricData[0].Dimensions[0].Name + '=' + params.MetricData[0].Dimensions[0].Value
+	}
+
 	async.each(params.MetricData, function(metric, cb ) {
 
 		var payload = {
