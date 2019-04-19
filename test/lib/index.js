@@ -18,7 +18,7 @@ cloudwatch = new Cloudwatch({
 require('../../cli')
 
 cli_cloudwatch = new AWS.CloudWatch({
-	endpoint: 'http://localhost:1005',
+	endpoint: 'http://localhost:10005/',
 	region: process.env.CW_DYNAMODB_REGION,
 	credentials: {
 		accessKeyId: process.env.CW_DYNAMODB_KEY,
