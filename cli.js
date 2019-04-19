@@ -38,10 +38,13 @@ http.createServer(function (client_req, client_res) {
 			console.log(err)
 		}
 
-
 		form_parameters.extract_param('Statistics', body_json )
+		form_parameters.extract_param('MetricData.member.1.Dimensions', body_json )
+		form_parameters.extract_param('MetricData.member.2.Dimensions', body_json )
 		form_parameters.extract_param('MetricData', body_json )
-		console.log(body_json)
+
+		console.log(JSON.stringify(body_json, null, "\t"))
+
 
 		if (body_json.Action === 'PutMetricData') {
 			delete body_json.Action;
